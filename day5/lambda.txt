@@ -1,0 +1,76 @@
+import json
+import boto3
+import os
+
+# =========================================================
+# SAGEMAKER RUNTIME CLIENT
+# =========================================================
+
+runtime = boto3.client("sagemaker-runtime")
+
+# =========================================================
+# ENDPOINT NAME
+# =========================================================
+
+ENDPOINT_NAME = "bike-sharing-endpoint-2"
+
+# =========================================================
+# LAMBDA HANDLER
+# =========================================================
+
+def lambda_handler(event, context):
+
+    try:
+
+        # ============================================
+        # INPUT PAYLOAD
+        # ============================================
+
+        payload = {"yr":0.0,"holiday":0.0,"workingday":1.0,"atemp":0.2426043519,"hum":0.5904030848,"windspeed":0.2000124518,"season_Fall":0.0,"season_Spring":1.0,"season_Summer":0.0,"season_Winter":0.0,"mnth_Apr":0.0,"mnth_Aug":0.0,"mnth_Dec":1.0,"mnth_Feb":0.0,"mnth_Jan":0.0,"mnth_Jul":0.0,"mnth_Jun":0.0,"mnth_Mar":0.0,"mnth_May":0.0,"mnth_Nov":0.0,"mnth_Oct":0.0,"mnth_Sep":0.0,"weekday_Friday":0.0,"weekday_Monday":0.0,"weekday_Saturday":0.0,"weekday_Sunday":0.0,"weekday_Thrusday":1.0,"weekday_Tuesday":0.0,"weekday_Wednesday":0.0,"weathersit_Clear":1.0,"weathersit_Light Snow & Rain":0.0,"weathersit_Mist & Cloudy":0.0}
+
+        # ============================================
+        # INVOKE SAGEMAKER ENDPOINT
+        # ============================================
+
+        response = runtime.invoke_endpoint(
+            EndpointName=ENDPOINT_NAME,
+            ContentType="application/json",
+            Body=json.dumps(payload)
+        )
+
+        # ============================================
+        # READ RESPONSE
+        # ============================================
+
+        result = response["Body"].read().decode("utf-8")
+
+        prediction = json.loads(result)
+
+        # ============================================
+        # RETURN RESPONSE
+        # ============================================
+
+        return {
+            "statusCode": 200,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": json.dumps({
+                "success": True,
+                "prediction": prediction
+            })
+        }
+
+    except Exception as e:
+
+        return {
+            "statusCode": 500,
+            "headers": {
+                "Content-Type": "application/json"
+            },
+            "body": json.dumps({
+                "success": False,
+                "error": str(e)
+            })
+        }
+
